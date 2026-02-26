@@ -9,11 +9,25 @@
 
 > A complete real-time data pipeline implementing the **Medallion Architecture** (Bronze → Silver → Gold) for e-commerce analytics, featuring streaming data processing, data quality validation, and real-time dashboard analytics.
 
+## ⚡ Performance Summary (Measured)
+
+- **Kafka Ingestion Throughput**: ~500–600 events/sec  
+  (measured via Python Kafka producer on a local Windows + Docker setup)
+
+- **Spark Silver Processing Throughput**:  
+  ~3,300–4,700 valid events per micro-batch (~5 seconds),  
+  equivalent to ~650–900 events/sec sustained processing
+
+- **End-to-End Latency**: <30 seconds from Kafka ingestion to Snowflake Gold tables
+
+> Metrics were measured locally; Kafka and Spark scale significantly higher in
+> multi-node production environments.
+
 **Introduction**
 
 - **What the project does**: This project demonstrates how Kafka is actually used in real systems — including message keys, partitioning, streaming data validation, offset management, and warehouse-first analytics — not just basic producers and consumers, by implementing a real-time e-commerce analytics data pipeline that streams user activity events through Kafka and Spark into Snowflake for dashboard-ready KPIs.
 
-- **What problems it solves**: Transforms raw, noisy clickstream events such as `page_view`, `add_to_cart`, and `purchase` into clean, reliable, low-latency business metrics using a Medallion (Bronze–Silver–Gold) architecture with built-in data quality validation and warehouse integration; it uses `startingOffsets = "earliest"` on the first Bronze → Silver load to ingest all existing data, then relies on Spark checkpoints so subsequent runs only read new messages from the `raw_events` topic into `clean_events`, ensuring streamlined, incremental processing.
+- **What problems it solves**: Transforms raw, noisy clickstream events such as `page_view`, `add_to_cart`, and `purchase` into clean, reliable, low-latency business metrics using a Medallion (Bronze–Silver–Gold) architecture with built-in data quality validation and warehouse integration; it uses `startingOffsets = "earliest"` on the first Bronze → Silver load to ingest all existing data, then relies on Spark checkpoints so subsequent runs only read new messages from the `raw_events` topic into `clean_events`, ensuring streamlined, incremental processing and avoiding full reprocessing.
 
 - **Which components it includes**: Containerized Kafka and Spark infrastructure, a Python event producer, Spark streaming jobs for Bronze, Silver, and Gold layers (including Kafka sources configured with `startingOffsets = "earliest"` and checkpoints for incremental processing), and Snowflake SQL scripts for analytical views and dashboards.
 
@@ -56,6 +70,12 @@ This project demonstrates a **production-ready real-time analytics pipeline** th
 3. **Silver Layer** → PySpark cleans and validates data (`clean_events` topic)
 4. **Gold Layer** → Aggregated metrics streamed to Snowflake
 5. **Analytics** → Business intelligence views for dashboards
+
+### Design Decisions
+- **Kafka** chosen for event durability & replay
+- **Spark Structured Streaming** for exactly-once semantics
+- **Snowflake** as analytical sink for BI workloads
+- **Medallion architecture** to enforce data quality boundaries
 
 ## 📦 Prerequisites
 
@@ -278,6 +298,17 @@ docker cp snowflake_gold.py <spark-container-name>:/opt/spark/work-dir/
 - 📈 Streams results directly to Snowflake
 - ⚡ Provides micro-batch processing for reliability
 
+### Gold Layer Aggregation Behavior
+
+The Gold layer performs **stateful aggregations** using Spark Structured Streaming.
+Events are grouped by `customer_id` and `event_date`, so:
+
+- Thousands of incoming events may produce only a few output rows
+- Each output row represents aggregated business metrics
+- Empty micro-batches are expected when no aggregates change
+
+This behavior is expected when using **update-mode streaming aggregations**.
+
 **📸 Snowflake Gold Layer Screenshot:**
 ![Snowflake Gold Data](images/snowflake-gold-layer.png)
 
@@ -418,11 +449,22 @@ SHOW GRANTS TO ROLE KAFKA_LOADER;
 - **Docker**: Containerization platform
 - **Python**: Programming language for data processing
 
-### Performance Metrics
-- **Throughput**: ~1000 events/second
-- **Latency**: <30 seconds end-to-end
-- **Data Quality**: 95%+ valid events in silver layer
-- **Availability**: 99.9% uptime with proper monitoring
+### Performance Metrics (Measured Locally)
+
+- **Kafka Producer Throughput**: ~500–600 events/sec  
+  (Python producer with Dockerized Kafka)
+
+- **Spark Silver Layer Throughput**:  
+  ~650–900 events/sec sustained processing  
+  (based on 3,300–4,700 valid events per micro-batch)
+
+- **Gold Layer Output Rate**:  
+  Aggregated metrics per customer per day  
+  (thousands of events collapse into a few aggregate rows)
+
+- **End-to-End Latency**: <30 seconds from ingestion to Snowflake
+
+- **Data Quality**: ~95%+ valid events after Silver layer validation
 
 ---
 
@@ -433,14 +475,6 @@ SHOW GRANTS TO ROLE KAFKA_LOADER;
 ✅ **Gold Layer**: Aggregated metrics in Snowflake  
 ✅ **Analytics**: Business intelligence views created  
 ✅ **Dashboard**: Real-time KPIs and insights available  
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## 📄 License
 
