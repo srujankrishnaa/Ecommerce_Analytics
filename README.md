@@ -1,3 +1,9 @@
+**Introduction**
+
+- **What the project does**: This project demonstrates how Kafka is actually used in real systems — including message keys, partitioning, streaming data validation, offset management, and warehouse-first analytics — not just basic producers and consumers, by implementing a real-time e-commerce analytics data pipeline that streams user activity events through Kafka and Spark into Snowflake for dashboard-ready KPIs.
+- **What problems it solves**: Transforms raw, noisy clickstream events such as `page_view`, `add_to_cart`, and `purchase` into clean, reliable, low-latency business metrics using a Medallion (Bronze–Silver–Gold) architecture with built-in data quality validation and warehouse integration; it uses `startingOffsets = "earliest"` on the first Bronze → Silver load to ingest all existing data, then relies on Spark checkpoints so subsequent runs only read new messages from the `raw_events` topic into `clean_events`, ensuring streamlined, incremental processing.
+- **Which components it includes**: Containerized Kafka and Spark infrastructure, a Python event producer, Spark streaming jobs for Bronze, Silver, and Gold layers (including Kafka sources configured with `startingOffsets = "earliest"` and checkpoints for incremental processing), and Snowflake SQL scripts for analytical views and dashboards.
+
 # 🏗️ Real-Time E-Commerce Analytics Pipeline
 ## Medallion Architecture with Kafka, Spark & Snowflake
 
