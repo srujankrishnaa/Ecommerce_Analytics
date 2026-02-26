@@ -1,0 +1,101 @@
+services:
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    hostname: spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    ports:
+      - "7077:7077"
+      - "8085:8080"
+    volumes:
+      - C:/Users/sruja/Desktop/kafka_ecomm:/opt/spark-app  # ✅ Mount your kafka project
+      - ./data:/opt/spark-data
+      - C:/Users/sruja/Desktop/kafka_ecomm/secrets:/opt/spark-secrets
+    networks:
+      - spark-net
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    hostname: spark-worker
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    ports:
+      - "8081:8081"
+    volumes:
+      - C:/Users/sruja/Desktop/kafka_ecomm:/opt/spark-app  # ✅ Mount your kafka project
+      - ./data:/opt/spark-data
+    networks:
+      - spark-net
+    environment:
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_NO_DAEMONIZE=true
+
+  jupyter:
+    image: local-pyspark-351:latest
+    container_name: jupyter
+    depends_on:
+      - spark-master
+    environment:
+      - PYSPARK_MASTER=spark://spark-master:7077
+    ports:
+      - "8888:8888"
+      - "4041:4040"
+    volumes:
+      - C:/Users/sruja/Desktop/kafka_ecomm:/opt/spark-app  # ✅ Mount your kafka project
+      - ./data:/opt/spark-data
+    networks:
+      - spark-net
+
+networks:
+  spark-net:
+    driver: bridge
+  
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      # ---- KRaft core ----
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # ---- Listeners (ALL roles must appear here) ----
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+
+      # ---- Advertised addresses ----
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_EXTERNAL://host.docker.internal:29092
+
+      # ---- Controller configuration ----
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # ---- Protocol mapping ----
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # ---- Storage ----
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+

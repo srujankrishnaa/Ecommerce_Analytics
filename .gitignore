@@ -1,0 +1,29 @@
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+
+# Environment and local config
+.env
+.env.*
+*.log
+
+# Python bytecode
+*.python-version
+
+# Secrets and keys
+secrets/
+snowflake_key.pub
+snowflake_key_base64.txt
+
+# Local helper / scratch files
+commands.txt
+setup_snowflake_stage.sql
+dashboard_queries.sql
+
