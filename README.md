@@ -336,6 +336,7 @@ SELECT * FROM event_funnel LIMIT 5;
 SELECT * FROM daily_customer_revenue LIMIT 5;
 SELECT * FROM real_time_customer_metrics LIMIT 5;
 
+
 #### 6.3 How to Use These Views
 ```
 The analytics views created in Snowflake are designed to be **directly consumable**
