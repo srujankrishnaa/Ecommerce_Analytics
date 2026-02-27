@@ -39,7 +39,6 @@
 - [🔧 Setup & Installation](#-setup--installation)
 - [📊 Pipeline Execution](#-pipeline-execution)
 - [🔐 Snowflake Authentication](#-snowflake-authentication)
-- [📈 Analytics & Dashboards](#-analytics--dashboards)
 - [🛠️ Troubleshooting](#️-troubleshooting)
 - [📚 Additional Resources](#-additional-resources)
 
@@ -336,56 +335,26 @@ SHOW VIEWS;
 SELECT * FROM event_funnel LIMIT 5;
 SELECT * FROM daily_customer_revenue LIMIT 5;
 SELECT * FROM real_time_customer_metrics LIMIT 5;
+
+#### 6.3 How to Use These Views
 ```
+The analytics views created in Snowflake are designed to be **directly consumable**
+by multiple downstream consumers without additional transformation.
 
----
+These views can be used by:
 
-## 📈 Analytics & Dashboards
+- **Snowflake Dashboards (Snowsight)**  
+  Create interactive dashboards directly within Snowflake to monitor
+  real-time and historical metrics such as conversion funnels, revenue trends,
+  and customer activity without exporting data.
 
-### Key Performance Indicators (KPIs)
+- **BI Tools** (Tableau, Power BI, Looker, etc.)  
+  Connect external BI tools to Snowflake and query the views as a
+  stable, analytics-ready semantic layer.
 
-#### 1. **Real-time vs Historical Comparison**
-```sql
-SELECT 
-    'Real-time Gold (Streaming)' AS data_source,
-    COUNT(*) AS total_records,
-    SUM(total_revenue) AS total_revenue,
-    COUNT(DISTINCT customer_id) AS unique_customers
-FROM real_time_customer_metrics
-UNION ALL
-SELECT 
-    'Historical Silver (Batch)' AS data_source,
-    COUNT(*) AS total_records,
-    SUM(total_revenue) AS total_revenue,
-    COUNT(DISTINCT customer_id) AS unique_customers
-FROM daily_customer_revenue;
-```
-
-#### 2. **Conversion Funnel Analysis**
-- 👀 **Page Views** → 🛒 **Add to Cart** → 💰 **Purchases**
-- Real-time conversion rate monitoring
-- Drop-off analysis at each stage
-
-#### 3. **Customer Segmentation**
-- 👑 **VIP Customers**: $1000+ lifetime value
-- 💎 **Premium**: $500-$999 lifetime value
-- 🥉 **Regular**: $100-$499 lifetime value
-- 🆕 **New**: <$100 lifetime value
-
-**📸 Dashboard Screenshot:**
-![Analytics Dashboard](images/dashboard-analytics.png)
-
-### Dashboard Queries
-The project includes 9 comprehensive dashboard queries:
-1. 📊 Data source comparison
-2. 📅 Daily performance metrics
-3. 👥 Customer segmentation analysis
-4. 🕐 Hourly activity heatmap
-5. 🏆 Top performers leaderboard
-6. 🔄 Conversion funnel breakdown
-7. ⚡ Real-time pipeline status
-8. 📈 Revenue trend analysis
-9. 🎯 Key performance indicators
+- **SQL Clients & Ad-hoc Analysis**  
+  Analysts and engineers can query the views directly for exploration,
+  debugging, and validation.
 
 ## 🛠️ Troubleshooting
 
